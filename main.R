@@ -4,9 +4,9 @@ rm(list=ls())
 library(tidyverse)
 library(ggplot2)
 library(car)
+library(stringr)
 
 load("./WUndergroundHourly.RData")
-summary(WG)
 
 # Remove all coloumns without data (only NA columns)
 clima <- select(WG,!c("wind_gust","wind_chill","heat_index","precip","precip_rate","precip_total"))
@@ -15,6 +15,8 @@ clima <- select(WG,!c("wind_gust","wind_chill","heat_index","precip","precip_rat
 clima <- select(clima, !c("hail","thunder","tornado"))
 
 #formatting data
+clima[c('date','time')] <- str_split_fixed(clima$date,' ',2)
+
 
 
 
@@ -24,5 +26,15 @@ clima <- mutate(clima,
                 cond = factor(cond),
                 fog  = factor(fog),
                 rain = factor(rain),
-                snow = factor(snow)
+                snow = factor(snow),
+                date = factor(date),
+                time = factor(time)
 )
+
+# Group all data by day 
+
+clima$dir[clima$dir == ]
+
+
+
+
