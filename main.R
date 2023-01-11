@@ -41,3 +41,22 @@ summarise(clima_by_date,
           mean(vis, na.rm = T),
           mean(pressure, na.rm = T))
 
+
+
+getmode <- function(v) {
+  groupv <- unique(v) 
+  tab <- tabulate(match(v,groupv))
+  groupv[tab == max(tab)]
+}
+
+factor = "dir"
+all_dates <- levels(clima$date)
+for (i in 1:1){
+  date <- filter(clima, date == all_dates[i]) %>% 
+    select(factor)
+  getmode(date)
+}  
+
+
+
+
