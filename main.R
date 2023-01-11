@@ -41,21 +41,21 @@ summarise(clima_by_date,
           mean(vis, na.rm = T),
           mean(pressure, na.rm = T))
 
+# Assign the modes of all
+all_factors = c("dir","cond","fog")
 
-
-getmode <- function(v) {
-  groupv <- unique(v) 
-  tab <- tabulate(match(v,groupv))
-  groupv[tab == max(tab)]
-}
-
-factor = "dir"
+for (i in 1:length(all_factors)){
+factor = all_factors[i]
 all_dates <- levels(clima$date)
-for (i in 1:1){
-  date <- filter(clima, date == all_dates[i]) %>% 
-    select(factor)
-  getmode(date)
-}  
+put_in_date <- c()
+for (i in 1:length(all_dates)){
+  factor_for_date <- filter(clima, date == all_dates[i]) %>% 
+    select(factor) 
+  max <- rownames(as.data.frame(which.max(table(factor_for_date))))
+  put_in_date <- c(put_in_date,max)
+} 
+print(put_in_date)
+}
 
 
 
