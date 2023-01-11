@@ -17,9 +17,6 @@ clima <- select(clima, !c("hail","thunder","tornado"))
 #formatting data
 clima[c('date','time')] <- str_split_fixed(clima$date,' ',2)
 
-
-
-
 # Picking the correct datatype for the columns
 clima <- mutate(clima,
                 dir  = factor(dir),
@@ -31,31 +28,23 @@ clima <- mutate(clima,
                 time = factor(time)
 )
 
-
+### Finding mode and mean for each date ###
 clima_by_date <- group_by(clima, date)
-summarise(clima_by_date, 
-          mean(temp, na.rm = T),
-          mean(dew_pt, na.rm = T),
-          mean(hum, na.rm = T),
-          mean(wind_spd, na.rm = T),
-          mean(vis, na.rm = T),
-          mean(pressure, na.rm = T))
 
-# Assign the modes of all
-all_factors = c("dir","cond","fog")
-
-for (i in 1:length(all_factors)){
-factor = all_factors[i]
-all_dates <- levels(clima$date)
-put_in_date <- c()
-for (i in 1:length(all_dates)){
-  factor_for_date <- filter(clima, date == all_dates[i]) %>% 
-    select(factor) 
-  max <- rownames(as.data.frame(which.max(table(factor_for_date))))
-  put_in_date <- c(put_in_date,max)
-} 
-print(put_in_date)
+mode <- function(factors){
+factors %>% 
+  table() %>% 
+  which.max() %>% 
+  as.data.frame() %>% 
+  rownames() %>% 
+  factor()
 }
+
+clima_by_date %>% 
+  summarise(
+    across(c(dir, cond, fog, rain, snow),mode),
+    across(c(temp, dew_pt, hum, wind_spd, vis, pressure), ~mean(.,na.rm=T))        
+    )
 
 
 
