@@ -54,12 +54,10 @@ clima_by_date %>%
 data_files <- dir("./data", full.names=T)
 
 # Read them into a single dataframe
-# Gives some warnings, but they are all 
-# related to non-important parts of the data
-# ..hopefully
+# \x00 is set to be ignored  since it for some reason is at the end of each file
 energy <- NULL
 for (i in seq_along(data_files)){
-  data <- read.table(data_files[i], sep=";") %>% 
+  data <- read.table(data_files[i], sep=";",skipNul=TRUE) %>% 
     select(V1, V2, V4)
   energy <- bind_rows(energy, data)
 }
