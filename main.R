@@ -31,10 +31,13 @@ clima <- mutate(clima,
                 time = factor(time)
 )
 
-# Group all data by day 
 
-clima$dir[clima$dir == ]
-
-
-
+clima_by_date <- group_by(clima, date)
+summarise(clima_by_date, 
+          mean(temp, na.rm = T),
+          mean(dew_pt, na.rm = T),
+          mean(hum, na.rm = T),
+          mean(wind_spd, na.rm = T),
+          mean(vis, na.rm = T),
+          mean(pressure, na.rm = T))
 
