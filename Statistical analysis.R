@@ -16,13 +16,11 @@ D <- mutate(D,
                 across(c(dir, cond, fog, rain, ID),factor)
 )
 
-#### Creating initalizing plots ####
-plot(D)
+D$tempdiff <- 21-D$temp
 
-ggplot(D, aes(x=date, y=temp, col=ID)) + 
-  geom_point(size=1)+
-  geom_smooth(method=lm,alpha=0.2, size=0.8) 
-
-ggplot(D,aes(x=date, y=temp)) +
-  geom_boxplot() + ggtitle("Temp")
-
+# Removing outliers
+D1 <- D[!(row.names(D) %in% c(3357, 3282, 3440, 8946)),]
+# Creating a linear fit
+slm1 <- lm(consumption ~ ID*tempdiff, data=D1)
+par(mfrow=c(2,2))
+plot(slm1)

@@ -1,6 +1,6 @@
 #### Introduction ####
 rm(list=ls())
-#hej
+
 library(tidyverse)
 library(ggplot2)
 library(car)
@@ -52,7 +52,7 @@ clima_mean_mode <- clima_by_date %>%
     across(c(temp, dew_pt, hum, wind_spd, vis, pressure), ~mean(.,na.rm=T))        
     )
 
-### Read in the energy performance of the building
+#### Read in the energy performance of the building ####
 # Find all the files in ./data
 data_files <- dir("./data", full.names=T)
 
@@ -79,4 +79,20 @@ energy <- filter(energy, id %in% id_to_keep$id)
 
 # set the correct datatypes
 energy <- mutate(energy, time = factor(time), reading = as.numeric(gsub(",", ".", reading)))
+
+## Interpolate at x.inter
+df_uniq <- unique(energy$time)
+length(df_uniq)
+
+
+
+# Creating the new column
+
+energy$newtime <- NA
+
+for (i in length(energy$time)){
+  
+  energy$newtime <- format(as.POSIXct(energy$time[i]),
+                           format = "%d-%m-%Y 23.59")
+}
 
