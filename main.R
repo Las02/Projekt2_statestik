@@ -5,6 +5,7 @@ library(tidyverse)
 library(ggplot2)
 library(car)
 library(stringr)
+library(xtable)
 
 load("./WUndergroundHourly.RData")
 
@@ -36,7 +37,7 @@ mode <- function(factors){
     rownames() %>% 
     factor()
   
-  # If it does not have a value set it to None for clarity
+# If it does not have a value set it to None for clarity
   if (max == ""){
     return(factor("None"))}
   else {
@@ -77,4 +78,4 @@ id_to_keep <- group_by(energy, id) %>%
 energy <- filter(energy, id %in% id_to_keep$id)
 
 # set the correct datatypes
-energy <- mutate(energy, time = factor(time), reading = as.numeric(gsub(",", "", reading)))
+energy <- mutate(energy, time = factor(time), reading = as.numeric(gsub(",", ".", reading)))
