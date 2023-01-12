@@ -79,3 +79,4 @@ energy <- filter(energy, id %in% id_to_keep$id)
 
 # set the correct datatypes
 energy <- mutate(energy, time = factor(time), reading = as.numeric(gsub(",", ".", reading)))
+
