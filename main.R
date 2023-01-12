@@ -125,14 +125,12 @@ id_time_cons <- bind_rows(temp_df,id_time_cons)
 }
 
 # make consumption array. 
-# calculated by taking day MINUS daybefore
+# calculated by taking the day before MINUS the day
 # this means that the last day gets NaN
 consumption <- group_by(id_time_cons, id) %>% 
   arrange(time) %>% 
-  mutate(cons=reading-lag(reading))
+  mutate(cons=lead(reading)-reading)
 
-# Remove 2018-08-31
-consumption <- filter(consumption, time != "2018-08-31")
 
 # ungroup and rename time to date and remove reading
 consumption <- ungroup(consumption, id)
@@ -140,7 +138,12 @@ consumption <- rename(consumption,date=time) %>% select(!"reading")
 
 # Join the two datasets
 clima_mean_mode <- mutate(clima_mean_mode, date=as.Date(date))
-joined <- full_join(clima_mean_mode, consumption, by="date")
+joined <- inner_join(clima_mean_mode, consumption, by="date")
+
+
+#Remove first date due to NANS, and end due to estimation
+joined <- filter(joined, date != "2018-08-31")
+joined <- filter(joined, date != "2018-12-29")
 
 # Rows
 nrow(joined)
@@ -148,5 +151,7 @@ nrow(joined)
 summary(joined)
 # Remaining meters == ids?
 nrow(unique(select(joined, id)))
-# 84 ids
+# 83 ids
+
+
 
