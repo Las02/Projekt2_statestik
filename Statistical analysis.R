@@ -13,7 +13,8 @@ D <- read.csv("merged_data.csv", header=TRUE)
 #### Changing the datatable #####
 str(D)
 D <- mutate(D,
-                across(c(dir, cond, fog, rain, ID),factor)
+                across(c(dir, cond, fog, rain, ID),factor),
+            date=as.Date(date)
 )
 
 D$tempdiff <- 21-D$temp
