@@ -15,7 +15,7 @@ D <- mutate(D,
                 across(c(dir, cond, fog, rain, ID),factor)
 )
 
-as.POSIXct(D$date)
+D$date <- as.POSIXct(D$date, tz = "UTC")
 str(D)
 
 # Adding to temp difference column to the dataframe 
@@ -34,6 +34,14 @@ par(mfrow=c(1,1))
 #plot(D$consumption ~ D$temp, col=D$ID, main = "Consumption as a function of tempature")
 plot(D$consumption ~ D$tempdif, col=D$ID, main = "Consumption as a function of tempaturedifference")
 plot(D$consumption ~ D$date, ylim=c(0,2), col=D$ID)
+plot(D$tempdif ~ D$date)
+plot(D$consumption ~ D$date, col=D$ID)
+
+ggplot(D,aes(x=date, y=consumption,col=ID)) + 
+  geom_point(size=0.8) + theme(legend.position = "none") 
+# shows date needs to be factorized in some sort of way
+
+
 # Consumption as a function of hum 
 #plot(D$consumption ~ D$hum, col=D$ID, main = "Consumption as a function of humidity")
 
@@ -42,11 +50,28 @@ plot(D$consumption ~ D$date, ylim=c(0,2), col=D$ID)
 #plot(D$consumption ~ D$ID, col=D$ID, main="Boxplot of consumption as a function of ID") 
 #plot(D$consumption ~ D$ID, col=D$ID, main="Boxplot of consumption as a function of ID",ylim=c(0,1)) 
 
-
-#diagnostics plot
+D <- select(D,!c("temp"))
 
 
 #### Analysis Model ####
+par(mfrow=c(1,1))
+lm1 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D )
+plot(lm1) # looks not very good 
+
+D1 <- D[!(row.names(D) %in% c(3357,3282,7178,8829)),]
+
+lm2 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D1 )
+plot(lm2) # looks not very good 
+
+D2 <- D1[!(row.names(D1) %in% c(3357,3282,7178,8829,9440,7082,7112,7081,8859, 9453, 4, 97)),]
+lm3 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D2 )
+plot(lm3) 
+
+lm4 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D2 )
+plot(lm4) 
+
+lm4_step <- step(lm4, scope = ~.^2, k=log(nrow(D1)), test="F")
+Anova(lm4_step)
 
 # Simple model
 
@@ -66,11 +91,6 @@ par(mfrow=c(2,2))
 lm_max <- lm(consumption ~ tempdif+ID+dew_pt+hum+wind_spd+pressure+date, data=D1)
 
 
-par(mfrow=c(1,1))
-lm3 <- lm(consumption ~ temp+ID, data=D)
-Anova(lm3)
-AIC(lm3)
-plot(D$consumption~D$tempdif, col=D$ID)
 
 lm_max1 <- step(lm(consumption ~ temp+dew_pt+wind_spd+hum+pressure+ID+date, data=D1), scope = ~.^2, k=log(nrow(D1)), test="F")
 summary(lm_max)
