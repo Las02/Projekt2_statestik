@@ -90,6 +90,8 @@ length(df_uniq)
 
 energy$newtime <- NA
 
+energy$Time<-as.POSIXct(energy$Time,tz="CET",format='%d-%m-%Y %H.%M')
+
 for (i in length(energy$time)){
   
   energy$newtime <- format(as.POSIXct(energy$time[i]),
