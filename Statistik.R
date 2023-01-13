@@ -15,7 +15,7 @@ D <- mutate(D,
                 across(c(dir, cond, fog, rain, ID),factor)
 )
 
-as.POSIXct(D$date, tz = "UTC")
+D$date <- as.POSIXct(D$date, tz = "UTC")
 str(D)
 
 # Adding to temp difference column to the dataframe 
@@ -34,6 +34,14 @@ par(mfrow=c(1,1))
 #plot(D$consumption ~ D$temp, col=D$ID, main = "Consumption as a function of tempature")
 plot(D$consumption ~ D$tempdif, col=D$ID, main = "Consumption as a function of tempaturedifference")
 plot(D$consumption ~ D$date, ylim=c(0,2), col=D$ID)
+plot(D$tempdif ~ D$date)
+plot(D$consumption ~ D$date, col=D$ID)
+
+ggplot(D,aes(x=date, y=consumption,col=ID)) + 
+  geom_point(size=0.8) + theme(legend.position = "none") 
+# shows date needs to be factorized in some sort of way
+
+
 # Consumption as a function of hum 
 #plot(D$consumption ~ D$hum, col=D$ID, main = "Consumption as a function of humidity")
 
@@ -46,113 +54,24 @@ plot(D$consumption ~ D$date, ylim=c(0,2), col=D$ID)
 D1 <- D[!(row.names(D) %in% c(3357, 3282, 3440, 8946, 4682, 7112, 1460, 8266, 4375, 2533, 2535, 7478, 7178, 87, 1)),]
 
 
-#diagnostics plot
 
-D2 <- D[!D$ID %in% c(78185925),]
-
-# Histogram of consumptions in general 
-#hist(D2$consumption,col=D2$ID)
-
-# Consumption as a function of temp ( slopes seem to depend on Ua (isolation))
-#plot(D2$consumption ~ D2$temp, col=D2$ID, main = "Consumption as a function of tempature")
-plot(D2$consumption ~ D2$tempdif, col=D2$ID, main = "Consumption as a function of tempaturedifference")
-
-# Consumption as a function of hum 
-#plot(D2$consumption ~ D2$hum, col=D2$ID, main = "Consumption as a function of humidity")
-
-
-# Box plot af consumption as a function of ID
-#plot(D2$consumption ~ D2$ID, col=D2$ID, main="Boxplot of consumption as a function of ID") 
-#plot(D2$consumption ~ D2$ID, col=D2$ID, main="Boxplot of consumption as a function of ID",ylim=c(0,1)) 
-
-
-
-
-
-D3 <- D[!D$ID %in% c(78185925,69429582),]
-#hist(D3$consumption,col=D2$ID)
-
-# Consumption as a function of temp ( slopes seem to depend on Ua (isolation))
-#plot(D3$consumption ~ D3$temp, col=D3$ID, main = "Consumption as a function of tempature")
-plot(D3$consumption ~ D3$tempdif, col=D3$ID, main = "Consumption as a function of tempaturedifference")
-
-# Consumption as a function of hum 
-#plot(D3$consumption ~ D3$hum, col=D3$ID, main = "Consumption as a function of humidity")
-
-
-# Box plot af consumption as a function of ID
-#plot(D3$consumption ~ D3$ID, col=D3$ID, main="Boxplot of consumption as a function of ID") 
-#plot(D3$consumption ~ D3$ID, col=D3$ID, main="Boxplot of consumption as a function of ID",ylim=c(0,1)) 
-
-
-
-D34 <- D[!D$ID %in% c(78185925,69585544),]
-
-#hist(D34$consumption,col=D2$ID)
-
-# Consumption as a function of temp ( slopes seem to depend on Ua (isolation))
-#plot(D34$consumption ~ D34$temp, col=D34$ID, main = "Consumption as a function of tempature")
-plot(D34$consumption ~ D34$tempdif, col=D34$ID, main = "Consumption as a function of tempaturedifference")
-
-# Consumption as a function of hum 
-#plot(D34$consumption ~ D34$hum, col=D34$ID, main = "Consumption as a function of humidity")
-
-
-# Box plot af consumption as a function of ID
-#plot(D34$consumption ~ D34$ID, col=D34$ID, main="Boxplot of consumption as a function of ID") 
-#plot(D34$consumption ~ D34$ID, col=D34$ID, main="Boxplot of consumption as a function of ID",ylim=c(0,1)) 
-
-
-
-D4 <- D[!D$ID %in% c(78185925,69429582,69585544),]
-#hist(D4$consumption,col=D2$ID)
-
-# Consumption as a function of temp ( slopes seem to depend on Ua (isolation))
-#plot(D4$consumption ~ D4$temp, col=D4$ID, main = "Consumption as a function of tempature")
-plot(D4$consumption ~ D4$tempdif, col=D4$ID, main = "Consumption as a function of tempaturedifference")
-
-# Consumption as a function of hum 
-#plot(D4$consumption ~ D4$hum, col=D4$ID, main = "Consumption as a function of humidity")
-
-
-# Box plot af consumption as a function of ID
-#plot(D4$consumption ~ D4$ID, col=D4$ID, main="Boxplot of consumption as a function of ID") 
-#plot(D4$consumption ~ D4$ID, col=D4$ID, main="Boxplot of consumption as a function of ID",ylim=c(0,1)) 
-
-
- 
 
 #### Analysis Model ####
+par(mfrow=c(1,1))
+lm1 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D )
+plot(lm1) # looks not very good 
+
+D1 <- D[!(row.names(D) %in% c(3357,3282,7178,8829)),]
+
+lm2 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D1 )
+plot(lm2) # looks not very good 
+
+D2 <- D1[!(row.names(D1) %in% c(3357,3282,7178,8829,9440,7082,7112,7081,8859)),]
+lm3 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D2 )
+plot(lm3) 
+
 
 # Simple model
-
-# for dataframe 0
-lm1 <- step(lm(consumption ~ ID*tempdif, data= D),test="F", k=log(nrow(D)))
-lm2 <- lm(consumption ~ ID*tempdif, data= D)
-AIC(lm1, lm2)
-par(mfrow=c(2,2))
-plot(lm1)
-Anova(lm1)
-
-# Dataframe 3
-lm3 <- step(lm(consumption ~ ID*tempdif, data= D3),test="F", k=log(nrow(D3)))
-par(mfrow=c(2,2))
-plot(lm3)
-Anova(lm3)
-
-# for dataframe 4
-lm4 <- step(lm(consumption ~ ID*tempdif, data= D4),test="F", k=log(nrow(D4)))
-par(mfrow=c(2,2))
-plot(lm4)
-Anova(lm4)
-
-
-
-#### Model selection ####
-#Our maximum model
-#lm_max <- step(lm(consumption ~ tempdiff*ID*date, data=D1), k=log(nrow(D1)), test="F")
-#lm_max <- step(lm(consumption ~ tempdiff*ID*date*dew_pt, data=D1), k=log(nrow(D1)), test="F")
-#lm_max <- step(lm(consumption ~ tempdiff*ID*date*dew_pt*hum, data=D1), k=log(nrow(D1)), test="F")
 
 par(mfrow=c(2,2))
 lm_max <- lm(consumption ~ tempdif+ID+dew_pt+hum+wind_spd+pressure, data=D1)
