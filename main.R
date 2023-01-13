@@ -1,11 +1,13 @@
 #### Introduction ####
 rm(list=ls())
-#hej
+
 library(tidyverse)
 library(ggplot2)
 library(car)
 library(stringr)
 
+
+### WUnderground data
 load("./WUndergroundHourly.RData")
 
 # Remove all columns without data (only NA columns)
@@ -23,8 +25,8 @@ clima[c('date','time')] <- str_split_fixed(clima$date,' ',2)
 clima <- mutate(clima,
   across(c(dir, cond, fog, rain, snow, date, time),factor)
 )
-
-### Finding mode and mean for each date ###
+  
+# Finding mean and mode for each day
 clima_by_date <- group_by(clima, date)
 
 # Define function to calculate mode
@@ -51,6 +53,7 @@ clima_mean_mode <- clima_by_date %>%
     across(c(temp, dew_pt, hum, wind_spd, vis, pressure), ~mean(.,na.rm=T))        
     )
 
+
 ### Read in the energy performance of the building
 # Find all the files in ./data
 data_files <- dir("./data", full.names=T)
@@ -68,6 +71,8 @@ for (i in seq_along(data_files)){
 energy <- energy %>% 
   rename(id=V1, time=V2, reading=V4)
 
+
+energy
 ## Exclude meters with less than 121 records
 # find the records with 121 records
 id_to_keep <- group_by(energy, id) %>% 
@@ -76,5 +81,10 @@ id_to_keep <- group_by(energy, id) %>%
 # only keep these
 energy <- filter(energy, id %in% id_to_keep$id)
 
+
 # set the correct datatypes
-energy <- mutate(energy, time = factor(time), reading = as.numeric(gsub(",", "", reading)))
+energy <- mutate(energy, time = factor(time), reading = as.numeric(gsub(",", ".", reading)))
+
+
+
+
