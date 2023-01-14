@@ -1,6 +1,6 @@
 <map version="freeplane 1.9.13">
 <!--To view this file, download free mind mapping software Freeplane from https://www.freeplane.org -->
-<node LOCALIZED_TEXT="new_mindmap" FOLDED="false" ID="ID_696401721" CREATED="1610381621824" MODIFIED="1610381621824" STYLE="oval">
+<node TEXT="Case2" FOLDED="false" ID="ID_696401721" CREATED="1610381621824" MODIFIED="1673717075696" STYLE="oval">
 <font SIZE="18"/>
 <hook NAME="MapStyle">
     <properties edgeColorConfiguration="#808080ff,#ff0000ff,#0000ffff,#00ff00ff,#ff00ffff,#00ffffff,#7c0000ff,#00007cff,#007c00ff,#7c007cff,#007c7cff,#7c7c00ff" show_icon_for_attributes="true" associatedTemplateLocation="template:/standard-1.6.mm" show_note_icons="true" fit_to_viewport="false"/>
@@ -105,8 +105,7 @@ new\_fit &amp; 169.00 &amp; -995.04 \\
 \end{tabular}
 \end{table}</span></pre>
   </body>
-</html>
-</richcontent>
+</html></richcontent>
 </node>
 </node>
 <node TEXT="new conclusion: brug fit_clima (better) AIC is not absoulute" ID="ID_788233639" CREATED="1673621327938" MODIFIED="1673621344279"/>

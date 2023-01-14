@@ -101,19 +101,21 @@ AIC(fit_clima, fit) # fit_clima er bedre
 Anova(fit_clima)
 plot(fit_clima)
 
+
+########################################################
+# Gammel stuff herfra
+########################################################
+
 # Adding MORE clima to the party
 # with a maximum model
-D_scope <- select(D, !c("date", "consumption","fog","rain","cond","dag", "vis", "dew_pt","dir"))
+D_scope <- select(D, !c("date", "consumption","dag"))
 
-# Vi tager vis med da den er resultat af cond,fog og rain
-par(mfrow=c(1,1))
-Anova(lm(vis ~ cond + fog + rain,D))
 
 fit_scope <- lm(std_cons~. ,D_scope)
-new_fit <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
-#lm(formula = std_cons ~ ID + hum + wind_spd + pressure + tempdif + 
-#start_or_end + ID:tempdif + tempdif:start_or_end + wind_spd:tempdif + 
-#  hum:start_or_end + hum:pressure + wind_spd:pressure, data = D_scope)
+new_fit <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
+#formula = std_cons ~ ID + hum + wind_spd + dir + vis + pressure + 
+#  cond + tempdif + ID:tempdif + vis:tempdif + dir:pressure + 
+#  dir:cond + pressure:cond + pressure:tempdif + hum:tempdif
 
 # Makes no sense (but is significant)
 f1 <- update(new_fit, .~. -hum:start_or_end)
@@ -129,10 +131,11 @@ nf <- update(.~.-dew_pt:tempdif,new_fit)
 
 
 
-
-
 ##########################################################ECTS
 
+# Vi tager vis med da den er resultat af cond,fog og rain
+par(mfrow=c(1,1))
+Anova(lm(vis ~ cond + fog + rain,D))
 
 f <- update(fit, .~. + D$wind_spd*D$dir)
 Anova(f)
