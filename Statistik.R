@@ -21,6 +21,15 @@ str(D)
 # Adding to temp difference column to the dataframe 
 D$tempdif <- 21 - D$temp
 
+# Find weekends
+library(lubridate)
+is_weekend <- function(date){
+  number_day_df <- wday(date, label=T)
+  number_day_char <- as.character(number_day_df)
+  return(number_day_char)
+}
+transmute(D, weekday=is_weekend(date)) %>% 
+  mutate(weekend = ifelse(weekday %in% c("lø","sø"),"weekend","workingday"))
 
 #### Creating initalizing plots ####
 # Pairplot of all variables 
