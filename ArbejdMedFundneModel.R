@@ -93,4 +93,20 @@ AIC(update(fit, .~. -wind_spd:weekend), fit)
 anova(update(fit, .~. -wind_spd:weekend), fit)
 # but we cannot remove them 
 
+# PLOT Tempdif and mean normalised consumption
+# (both divided by their means)
+# against date
+cons_mean <- summarise(D, mean(ncons)) %>% as.double()
+D_by_date <- group_by(D, date)
+D_plot <- summarise(D_by_date, mncons = mean(ncons)/cons_mean)
+temp_mean <- summarise(D, mean(tempdif)) %>% as.double()
+D2_plot <- mutate(D, mtempdif = tempdif/temp_mean)
+
+ggplot(D_plot) +
+  geom_line(aes(x=date, y=mncons), col="Red", size=0.4) +
+  geom_line(data = D2_plot, aes(x=date, y=mtempdif),size=0.4) +
+  labs(x="Date", y="tempdif / mean normalised consumption \n (divided by their means)") +
+  ggtitle("Tempdif and mean normalised consumption
+(both divided by their means)
+against date")
 
