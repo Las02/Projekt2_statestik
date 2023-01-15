@@ -47,7 +47,7 @@ D <- mutate(D_with_mean, ncons = consumption/mean_each)
 
 ## Removing non important columns
 D2 <- select(D,!c("mean_each","consumption"))
-plot(D2,main="Pairsplot of data")
+
 #### Plots for descriptive analysis ####
 
 ## START/END IMPORTANT
@@ -73,7 +73,7 @@ ggplot(D, aes(x=tempdif, y=ncons, col=ID))+
 
 
 ggplot(D, aes(x=tempdif, y=ncons, col=ID))+
-  geom_point(size=0.8)+ theme(legend.position = "none")+geom_smooth(method=lm)+
+  geom_point(size=0.8)+ theme(legend.position = "none")+geom_smooth(method=lm, size=0.5, alpha=0)+
   labs(y="Normalized consumption", x= "Temperature difference", title ="Temperature difference as a function of normalized consumption")
 
 
