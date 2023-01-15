@@ -53,51 +53,106 @@ ggplot(D,aes(x=date, y=consumption,col=ID)) +
 D <- select(D,!c("temp"))
 
 
-#### Analysis Model ####
-par(mfrow=c(1,1))
-lm1 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D )
-plot(lm1) # looks not very good 
 
-D1 <- D[!(row.names(D) %in% c(3357,3282,7178,8829)),]
+# getting start/end_date int (mutating the date variable)
+date <- mutate(D, dag=str_split_fixed(date,"-",3)[ ,3])
+date <- mutate(date, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %>% 
+  mutate(start_or_end = factor(start_or_end))
 
-lm2 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D1 )
-plot(lm2) # looks not very good 
+# Trying one fit
+#it <- lm(consumption~tempdif+ID+tempdif:start_or_end,date)
+#Anova(fit)
+#coplot(consumption ~ tempdif | start_or_end,date,col=date$ID)
 
-D2 <- D1[!(row.names(D1) %in% c(3357,3282,7178,8829,9440,7082,7112,7081,8859, 9453, 4, 97)),]
-lm3 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D2 )
-plot(lm3) 
+# And another
+#fit <- lm(consumption~tempdif+ID+tempdif:start_or_end +ID:tempdif:start_or_end,date)
 
-lm4 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D2 )
-plot(lm4) 
+#par(mfrow=c(2,2))
+#plot(fit)
 
+# Minimum model
+mean_cons<- mean(D$consumption)
+D <- mutate(date, std_cons=consumption/mean_cons)
+D_no_clima <- select(D, ID,start_or_end, tempdif, std_cons)
+fit <- lm(std_cons ~ .^4, D_no_clima)
+drop1(fit,test="F")
+new_fit <- step(fit, test="F",correlation = TRUE)
+Anova(new_fit,correlation=TRUE)
+drop1(new_fit)
 
-lm4_step <- step(lm4, scope = ~.^2, k=log(nrow(D1)), test="F")
-summary(lm4_step)
-Anova(lm4_step)
-AIC(lm4_step)
-
-AIC(lm(formula = std_cons ~ ID + dew_pt + hum + wind_spd + tempdif + 
-     ID:tempdif + wind_spd:tempdif + dew_pt:tempdif, data = D2))
-
-# Simple model
-
+# Looking for outliers
 par(mfrow=c(2,2))
-lm_max <- lm(consumption ~ tempdif+ID+dew_pt+hum+wind_spd+pressure, data=D1)
+plot(new_fit)
+
+# Removing outliers
+remove <- c(3357,3282,3440)
+D <- D[!(row.names(D) %in% remove ),]
+D_no_clima<- D_no_clima[!(row.names(D_no_clima) %in% remove),]
+
+fit <- lm(std_cons ~ (ID + start_or_end + tempdif)^4, D_no_clima)
+par(mfrow=c(2,2))
+plot(fit)
+summary(fit)
+
+# adding some clima
+fit_clima <- step(update(fit, .~. + D$hum*D$wind_spd), test ="F")
+anova(fit_clima, fit) # They are sig dif
+AIC(fit_clima, fit) # fit_clima er bedre 
+Anova(fit_clima)
+plot(fit_clima)
 
 
-lm_max1 <- step(lm(consumption ~ temp+dew_pt+wind_spd+hum+pressure+ID+date, data=D1), scope = ~.^2, k=log(nrow(D1)), test="F")
-summary(lm_max)
-Anova(lm_max1)
-alias(lm_max)
-plot(lm_max)
-# We can't decide to remove anything from just those plots we will have to use a diagnostics plot
+########################################################
+# Gammel stuff herfra
+########################################################
 
-summary(D)
-
+# Adding MORE clima to the party
+# with a maximum model
+D_scope <- select(D, !c("date", "consumption","dag"))
 
 
+fit_scope <- lm(std_cons~. ,D_scope)
+new_fit <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
+#formula = std_cons ~ ID + hum + wind_spd + dir + vis + pressure + 
+#  cond + tempdif + ID:tempdif + vis:tempdif + dir:pressure + 
+#  dir:cond + pressure:cond + pressure:tempdif + hum:tempdif
+
+# Makes no sense (but is significant)
+f1 <- update(new_fit, .~. -hum:start_or_end)
+Anova(new_fit)
+f2 <- update(new_fit, .~. -tempdif:start_or_end )
+Anova(new_fit)
+
+
+summary(new_fit, correlation = T)
+
+# dropping aliased coeff
+nf <- update(.~.-dew_pt:tempdif,new_fit)
 
 
 
+##########################################################ECTS
 
+# Vi tager vis med da den er resultat af cond,fog og rain
+par(mfrow=c(1,1))
+Anova(lm(vis ~ cond + fog + rain,D))
 
+f <- update(fit, .~. + D$wind_spd*D$dir)
+Anova(f)
+
+# Fog i not significant
+f <- update(f, .~. + D$fog*D$wind_spd)
+Anova(f)
+f <- update(f, .~. -D$fog:D$wind_spd)
+Anova(f)
+
+# Rain
+f <- update(f, .~. +D$rain)
+Anova(f)
+
+#
+f <- update(f, .~. +D$vis)
+Anova(f)
+
+f <- update(f, .~. +D$rain*D$vis)
+Anova(f)
