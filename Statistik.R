@@ -74,11 +74,12 @@ date <- mutate(date, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %
 mean_cons<- mean(D$consumption)
 D <- mutate(date, std_cons=consumption/mean_cons)
 D_no_clima <- select(D, ID,start_or_end, tempdif, std_cons)
-fit <- lm(std_cons ~ .^4, D_no_clima)
+fit <- lm(std_cons ~ .^2, D_no_clima, k=log(nrow(D)))
 drop1(fit,test="F")
 new_fit <- step(fit, test="F",correlation = TRUE)
 Anova(new_fit,correlation=TRUE)
 drop1(new_fit)
+AIC(new_fit)
 
 # Looking for outliers
 par(mfrow=c(2,2))
@@ -89,13 +90,15 @@ remove <- c(3357,3282,3440)
 D <- D[!(row.names(D) %in% remove ),]
 D_no_clima<- D_no_clima[!(row.names(D_no_clima) %in% remove),]
 
-fit <- lm(std_cons ~ (ID + start_or_end + tempdif)^4, D_no_clima)
+fit4 <- lm(std_cons ~ (ID + start_or_end + tempdif)^4, D_no_clima)
+fit2 <- lm(std_cons ~ (ID + start_or_end + tempdif)^2, D_no_clima)
+AIC(fit4, fit2)
 par(mfrow=c(2,2))
 plot(fit)
 summary(fit)
 
 # adding some clima
-fit_clima <- step(update(fit, .~. + D$hum*D$wind_spd), test ="F")
+fit_clima <- step(update(fit, .~. + D$hum*D$wind_spd), test ="F", scope = ~.^2)
 anova(fit_clima, fit) # They are sig dif
 AIC(fit_clima, fit) # fit_clima er bedre 
 Anova(fit_clima)
