@@ -33,7 +33,7 @@ transmute(D, weekday=is_weekend(date)) %>%
 
 #### Creating initalizing plots ####
 # Pairplot of all variables 
-#plot(D,col=D$ID,main="Pairsplot of dataframe")
+plot(D,col=D$ID,main="Pairsplot of dataframe")
 
 # Histogram of consumptions in general 
 hist(D$consumption,col=D$ID)

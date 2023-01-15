@@ -35,6 +35,12 @@ D <- mutate(D, dag=str_split_fixed(date,"-",3)[ ,3])
 D <- mutate(D, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %>% 
   mutate(start_or_end = factor(start_or_end))
 
+## Removing non important columns
+D <- select(D,!c("temp","dag","weekday", "date"))
+
+
+#plot(D,col=D$ID,main="Pairsplot of data")
+
 # find the normalised data
 mean_each <- group_by(D, ID) %>% 
   summarise(mean_each = mean(consumption))
@@ -42,7 +48,12 @@ D_with_mean <- inner_join(mean_each, D, "ID")
 D <- mutate(D_with_mean, ncons = consumption/mean_each)
 
 ## Removing non important columns
-D <- select(D,!c("temp","mean_each","dag","weekday"))
+D2 <- select(D,!c("mean_each","consumption"))
+plot(D2,main="Pairsplot of data")
+
+#### Creating a pairsplot ####
+
+
 
 
 #### Analyzing the different models NO CLIMA MODELS ####
@@ -87,7 +98,7 @@ f8 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
 
 
 #### Important plots ####
-
+plot(D,col=D$ID,main="Pairsplot of dataframe")
 ## START/END IMPORTANT
 # It looks like end/start date has an effect
 ggplot(D,aes(x=date, y=ncons,col=ID)) + 
