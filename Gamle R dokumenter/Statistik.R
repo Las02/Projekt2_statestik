@@ -83,7 +83,7 @@ date <- mutate(date, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %
 mean_cons<- mean(D$consumption)
 D <- mutate(date, std_cons=consumption/mean_cons)
 
-ggplot(D,aes(x=date, y=std_cons,col=ID)) + 
+ggplot(D,aes(x=date, y=ncons,col=ID)) + 
   geom_point(size=0.8) + theme(legend.position = "none") 
 
 D_no_clima <- select(D, ID,start_or_end, tempdif, consumption)
