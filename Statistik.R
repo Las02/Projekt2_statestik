@@ -56,7 +56,7 @@ D <- select(D,!c("temp"))
 
 # getting start/end_date int (mutating the date variable)
 date <- mutate(D, dag=str_split_fixed(date,"-",3)[ ,3])
-date <- mutate(date, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %>% 
+D <- mutate(date, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %>% 
   mutate(start_or_end = factor(start_or_end))
 
 # Trying one fit
@@ -69,14 +69,17 @@ date <- mutate(date, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %
 
 #par(mfrow=c(2,2))
 #plot(fit)
+mean_each <- group_by(D, ID) %>% 
+  summarise(mean_each = mean(consumption))
+D_with_mean <- inner_join(mean_each, D, "ID") 
+D <- mutate(D_with_mean, ncons = consumption/mean_each)
+
 
 # Minimum model
-mean_cons<- mean(D$consumption)
-D <- mutate(date, std_cons=consumption/mean_cons)
-D_no_clima <- select(D, ID,start_or_end, tempdif, std_cons)
-fit <- lm(std_cons ~ .^4, D_no_clima)
+D_no_clima <- select(D, ID,start_or_end, tempdif, ncons)
+fit <- lm(ncons ~ .^4, D_no_clima)
 drop1(fit,test="F")
-new_fit <- step(fit, test="F",correlation = TRUE)
+new_fit <- step(fit, test="F",correlation = TRUE, k=log(nrow(D)))
 Anova(new_fit,correlation=TRUE)
 drop1(new_fit)
 
@@ -85,33 +88,56 @@ par(mfrow=c(2,2))
 plot(new_fit)
 
 # Removing outliers
-remove <- c(3357,3282,3440)
+remove <- c(9481,1622,1639)
 D <- D[!(row.names(D) %in% remove ),]
 D_no_clima<- D_no_clima[!(row.names(D_no_clima) %in% remove),]
 
-fit <- lm(std_cons ~ (ID + start_or_end + tempdif)^4, D_no_clima)
+fit <- lm(ncons ~ .^4, D_no_clima)
 par(mfrow=c(2,2))
 plot(fit)
 summary(fit)
 
 # adding some clima
-fit_clima <- step(update(fit, .~. + D$hum*D$wind_spd), test ="F")
+fit_clima <- step(update(fit, .~.*D$hum*D$wind_spd), test ="F",k=log(nrow(D)))
 anova(fit_clima, fit) # They are sig dif
 AIC(fit_clima, fit) # fit_clima er bedre 
 Anova(fit_clima)
 plot(fit_clima)
+drop1(fit_clima)
+
+# Remove start_or_end:tempdif:D$hum , start_or_end:D$hum:D$wind_spd
+f1 <- update(fit_clima, .~. -start_or_end:tempdif:D$hum -start_or_end:D$hum:D$wind_spd)
+f2 <- step(f1, test="F", k=log(nrow(D)))
+
+#Remove start_or_end:D$hum  Does not makes sense
+f3 <- update(f2, .~. -start_or_end:D$hum)
+drop1(f3, test ="F")
+# Remove ID
+f4 <- update(f3, .~. -ID)
+# We cannot drop more
+Anova(f4)
+AIC(f4, fit_clima)
+anova(f4, fit_clima)
+
+# Trying model selection again without the ones which does not make sense
+f5 <- step(update(fit, .~.*D$hum*D$wind_spd -start_or_end:tempdif:D$hum -start_or_end:D$hum:D$wind_spd -ID -start_or_end:D$hum) , test ="F")
+
 
 # Adding MORE clima to the party
 # with a maximum model
 D_scope <- select(D, !c("date", "consumption","fog","rain","cond","dag", "vis", "dew_pt","dir"))
 
+
+
+
+
 # Vi tager vis med da den er resultat af cond,fog og rain
 par(mfrow=c(1,1))
 Anova(lm(vis ~ cond + fog + rain,D))
 
-fit_scope <- lm(std_cons~. ,D_scope)
+fit_scope <- lm(ncons~. ,D_scope)
 new_fit <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
-#lm(formula = std_cons ~ ID + hum + wind_spd + pressure + tempdif + 
+#lm(formula = ncons ~ ID + hum + wind_spd + pressure + tempdif + 
 #start_or_end + ID:tempdif + tempdif:start_or_end + wind_spd:tempdif + 
 #  hum:start_or_end + hum:pressure + wind_spd:pressure, data = D_scope)
 
@@ -126,9 +152,6 @@ summary(new_fit, correlation = T)
 
 # dropping aliased coeff
 nf <- update(.~.-dew_pt:tempdif,new_fit)
-
-
-
 
 
 ##########################################################ECTS
@@ -153,3 +176,12 @@ Anova(f)
 
 f <- update(f, .~. +D$rain*D$vis)
 Anova(f)
+
+lm5 <-update(fit_clima,.~.-start_or_end:tempdif)
+
+
+lm6 <- step(lm5,test="F",k=log(nrow(D)))
+AIC(lm6,fit_clima)
+
+anova(lm6,fit_clima)
+
