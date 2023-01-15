@@ -73,13 +73,18 @@ date <- mutate(date, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %
 # Minimum model
 mean_cons<- mean(D$consumption)
 D <- mutate(date, std_cons=consumption/mean_cons)
-D_no_clima <- select(D, ID,start_or_end, tempdif, std_cons)
-fit <- lm(std_cons ~ .^2, D_no_clima, k=log(nrow(D)))
+
+ggplot(D,aes(x=date, y=std_cons,col=ID)) + 
+  geom_point(size=0.8) + theme(legend.position = "none") 
+
+D_no_clima <- select(D, ID,start_or_end, tempdif, consumption)
+fit <- lm(consumption ~ .^2, data=D_no_clima, k=log(nrow(D)))
 drop1(fit,test="F")
 new_fit <- step(fit, test="F",correlation = TRUE)
 Anova(new_fit,correlation=TRUE)
 drop1(new_fit)
 AIC(new_fit)
+
 
 # Looking for outliers
 par(mfrow=c(2,2))

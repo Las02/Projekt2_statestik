@@ -200,6 +200,48 @@ D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","v
 fit_scope <- lm(std_cons~. ,D_scope)
 f5 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
 ###
-D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","dew_pt","hum","wind_spd","pressure","start_or_end"))
+
+
+
+
+
+
+
+###### Testing models
+
+D_scope <- select(D,ID, std_cons, tempdif,  start_or_end)
+fit_scope <- lm(std_cons~. ,D_scope)
+f4 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+D_scope <- select(D,ID, std_cons, tempdif)
+fit_scope <- lm(std_cons~. ,D_scope)
+f5 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+
+
+D_scope <- select(D,ID, std_cons, start_or_end, tempdif, wind_spd, hum, dew_pt)
 fit_scope <- lm(std_cons~. ,D_scope)
 f6 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+D_scope <- select(D,ID, std_cons, tempdif, wind_spd, hum, dew_pt)
+fit_scope <- lm(std_cons~. ,D_scope)
+f7 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+# with pressure + start/end  -> best model
+D_scope <- select(D,ID, std_cons, tempdif, wind_spd, hum, dew_pt, pressure, start_or_end)
+fit_scope <- lm(std_cons~. ,D_scope)
+f8 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+fit_scope <- lm(std_cons~. ,D_scope)
+fit_test <- lm(std_cons~.^4, D_scope)
+AIC(f8, fit_scope, fit_test)
+anova(fit_test, f8) # not sig different -> f8 is more simple
+
+# with ^4
+D_scope <- select(D,ID, std_cons, tempdif, wind_spd, hum, dew_pt, pressure, start_or_end)
+
+f9 <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
+### Samme model herfra
+
+
+
+
