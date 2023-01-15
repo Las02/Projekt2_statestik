@@ -70,8 +70,14 @@ plot(lm3)
 lm4 <- lm(consumption ~ . - date - dir - vis -cond - fog -rain, data=D2 )
 plot(lm4) 
 
+
 lm4_step <- step(lm4, scope = ~.^2, k=log(nrow(D1)), test="F")
+summary(lm4_step)
 Anova(lm4_step)
+AIC(lm4_step)
+
+AIC(lm(formula = std_cons ~ ID + dew_pt + hum + wind_spd + tempdif + 
+     ID:tempdif + wind_spd:tempdif + dew_pt:tempdif, data = D2))
 
 # Simple model
 
