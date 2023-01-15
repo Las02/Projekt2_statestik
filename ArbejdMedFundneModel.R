@@ -49,3 +49,48 @@ D <- select(D,!c("temp","mean_each","dag","weekday"))
 
 
 #### Removing outliers #### 
+
+# Setting the found model up
+fit_before <- lm(ncons ~ ID + tempdif + wind_spd + hum + dew_pt + 
+  pressure + weekend + ID:tempdif + tempdif:weekend + wind_spd:hum + 
+  tempdif:dew_pt + wind_spd:dew_pt + tempdif:hum + hum:dew_pt + 
+  ID:weekend + dew_pt:weekend + hum:weekend + dew_pt:pressure, 
+  data = D)
+
+# Removing outliers
+par(mfrow=c(2,2))
+plot(fit_before)
+outliers <- c(9841, 1639,9478,9477)
+D <- filter(D, !row_number() %in% outliers)
+fit_before <- lm(ncons ~ ID + tempdif + wind_spd + hum + dew_pt + 
+            pressure + weekend + ID:tempdif + tempdif:weekend + wind_spd:hum + 
+            tempdif:dew_pt + wind_spd:dew_pt + tempdif:hum + hum:dew_pt + 
+            ID:weekend + dew_pt:weekend + hum:weekend + dew_pt:pressure, 
+          data = D)
+par(mfrow=c(2,2))
+plot(fit_before)
+
+# Fitting the model again after
+D_scope <- select(D, ID, ncons, tempdif, wind_spd, hum, dew_pt, pressure, weekend)
+fit_scope <- lm(ncons~. ,D_scope)
+fit <- step(fit_scope, scope = ~.^2 , k=log(nrow(D_scope)), test = "F")
+# lm(formula = ncons ~ ID + tempdif + wind_spd + hum + dew_pt + 
+#      pressure + weekend + ID:tempdif + tempdif:weekend + wind_spd:hum + 
+#      ID:weekend + tempdif:dew_pt + wind_spd:dew_pt + tempdif:hum + 
+#      hum:dew_pt + wind_spd:weekend + dew_pt:weekend + hum:weekend + 
+#      dew_pt:pressure, data = D_scope)
+
+AIC(fit, fit_before)
+## RESULTS
+# The AIC is lower (-3816.148) vs before (-3808.309)
+# The model we after removing outliers is the same
+
+#### Can we remove nonsensical interactions #### 
+# Based on drop1
+drop1(fit, test ="F")
+# The nonsensical are eg this one 
+AIC(update(fit, .~. -wind_spd:weekend), fit)
+anova(update(fit, .~. -wind_spd:weekend), fit)
+# but we cannot remove them 
+
+
