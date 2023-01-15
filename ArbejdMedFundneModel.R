@@ -93,4 +93,3 @@ AIC(update(fit, .~. -wind_spd:weekend), fit)
 anova(update(fit, .~. -wind_spd:weekend), fit)
 # but we cannot remove them 
 
-
