@@ -45,7 +45,7 @@ D <- mutate(D_with_mean, ncons = consumption/mean_each)
 D <- select(D,!c("temp","mean_each","dag","weekday"))
 
 
-#### Analyzing the different models ####
+#### Analyzing the different models NO CLIMA MODELS ####
 ## Basic
 D_basic <- select(D,ID, ncons, tempdif)
 fit_basic <- lm(ncons~. ,D_basic)
@@ -70,6 +70,20 @@ f_weekday_startend <- step(fit_weekday_startend, scope = ~.^3 , k=log(nrow(D_wee
 
 ## Comparing the 4
 AIC(fit_basic, f_startend, f_weekday,f_weekday_startend)
+# They are sig different
+anova(f_weekday, f_weekday_startend)
+
+## Results
+# weekday + startend is the best model
+# but startend does not make sense
+# so we are going with second best
+# ncons ~ ID + tempdif + weekend + ID:tempdif + tempdif:weekend
+
+#### Analyzing the different models WITH CLIMA ####
+
+D_scope <- select(D,ID, std_cons, tempdif, wind_spd, hum, dew_pt, pressure, start_or_end)
+fit_scope <- lm(std_cons~. ,D_scope)
+f8 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
 
 
 #### Important plots ####
