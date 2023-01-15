@@ -93,6 +93,8 @@ fit <- lm(std_cons ~ (ID + start_or_end + tempdif)^4, D_no_clima)
 par(mfrow=c(2,2))
 plot(fit)
 summary(fit)
+Anova(fit)
+
 
 # adding some clima
 fit_clima <- step(update(fit, .~. + D$hum*D$wind_spd), test ="F")
@@ -187,17 +189,17 @@ f2 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
 #### CHOSEN CLIMA +/- start_or_end
 D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis"))
 fit_scope <- lm(std_cons~. ,D_scope)
-f3 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+f3 <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
 ###
 D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","start_or_end"))
 fit_scope <- lm(std_cons~. ,D_scope)
-f4 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+f4 <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
 
 #### SIMPLE MODEL UDEN KLIMA +/- start_or_end
-D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","dew_pt","hum","wind_spd,pressure"))
+D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","dew_pt","hum","wind_spd","pressure"))
 fit_scope <- lm(std_cons~. ,D_scope)
 f5 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
 ###
-D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","dew_pt","hum","wind_spd,pressure,start_or_end"))
+D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","dew_pt","hum","wind_spd","pressure","start_or_end"))
 fit_scope <- lm(std_cons~. ,D_scope)
 f6 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
