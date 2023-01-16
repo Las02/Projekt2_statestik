@@ -200,13 +200,3 @@ models <- arrange(models, AIC) %>%
 xtable(models)
 
 
-#### Important plots ####
-
-## START/END IMPORTANT
-# It looks like end/start date has an effect
-ggplot(D,aes(x=date, y=ncons,col=ID)) + 
-  geom_point(size=0.8) + theme(legend.position = "none") 
-# But it is explained by the temperature fluxating. Maybe we are modelling the noise
-ggplot(D,aes(x=date, y=tempdif,col=ID)) + 
-  geom_point(size=0.8) + theme(legend.position = "none") 
-
