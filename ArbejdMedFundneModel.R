@@ -30,7 +30,7 @@ is_weekend <- function(date){
   return(number_day_char)
 }
 D <- mutate(D, weekday=is_weekend(date)) %>% 
-  mutate(weekend = ifelse(weekday %in% c("lø","sø"),"weekend","workingday")) %>% 
+  mutate(weekend = ifelse(weekday %in% c("lÃ¸","sÃ¸","Sat","Sun"),"weekend","workingday")) %>% 
   mutate(weekend = factor(weekend))
 
 # getting start/end of month int (mutating the date variable)
