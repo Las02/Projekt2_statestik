@@ -8,6 +8,7 @@ library(car)
 library(stringr)
 library(xtable)
 library(lubridate)
+library("xlsx")
 
 ## Reading in the data
 D <- read.csv("merged_data.csv", header=TRUE)
@@ -80,6 +81,7 @@ fit <- step(fit_scope, scope = ~.^2 , k=log(nrow(D_scope)), test = "F")
 #      hum:dew_pt + wind_spd:weekend + dew_pt:weekend + hum:weekend + 
 #      dew_pt:pressure, data = D_scope)
 
+summary(fit)
 AIC(fit, fit_before)
 ## RESULTS
 # The AIC is lower (-3816.148) vs before (-3808.309)
@@ -92,4 +94,73 @@ drop1(fit, test ="F")
 AIC(update(fit, .~. -wind_spd:weekend), fit)
 anova(update(fit, .~. -wind_spd:weekend), fit)
 # but we cannot remove them 
+
+
+
+#### Design matrix ####
+### 262 columns in total 
+### range 90 - 171 is isolation
+
+summary.fit <- summary(fit)$coefficients
+summary.df <- as.data.frame(summary.fit)
+fit_cor <- summary(fit,correlation = TRUE)
+
+summary.df$row <- 1:nrow(summary.df)
+
+isolation <- grep(pattern="ID\\d+:tempdif",x=rownames(summary.df))
+(summary.df)[isolation,]
+
+
+A <- cbind(0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,
+           diag(82),
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0,0,0,0,0,0,0,0,0,0,
+           0)
+A <- rbind(0, A)
+A[,84] <- rep(1,length(A[,1]))
+
+
+# Making the estimate of slope and st.error
+est <- A %*% fit_cor$coefficients[,1]
+var_est <- A %*% fit_cor$cov.unscaled %*% t(A) * fit_cor$sigma^2
+coef <- data.frame(ID=levels(D_scope$ID), Slope = est, sd.error=sqrt(diag(var_est)))
+
+# Adding the confidence interval to dataframe 
+coef <- mutate(coef, Qup = Slope + qnorm(0.975)*sd.error)
+coef <- mutate(coef, Qlow = Slope - qnorm(0.975)*sd.error)
+
+## Adding charateristics to the buildings 
+char <- read.xlsx("HTK_building_data_share.xlsx",1,header=FALSE)
+char <- rename(char,ID=X1) %>% select(ID,X2)
+coef <- left_join(coef,char,by="ID")
+
+
+# selecting 10 best and worse buildings
+worst10 <- arrange(coef, Slope)[1:10,]
+top10 <- arrange(coef, desc(Slope))[1:10,]
+
+
+summary(fit)
+
+worst10
+top10
+
+
+
+
 
