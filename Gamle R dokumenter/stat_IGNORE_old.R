@@ -93,6 +93,8 @@ fit <- lm(std_cons ~ (ID + start_or_end + tempdif)^4, D_no_clima)
 par(mfrow=c(2,2))
 plot(fit)
 summary(fit)
+Anova(fit)
+
 
 # adding some clima
 fit_clima <- step(update(fit, .~. + D$hum*D$wind_spd), test ="F")
@@ -100,20 +102,24 @@ anova(fit_clima, fit) # They are sig dif
 AIC(fit_clima, fit) # fit_clima er bedre 
 Anova(fit_clima)
 plot(fit_clima)
+#lm(formula = std_cons ~ ID + start_or_end + tempdif + D$hum + 
+#D$wind_spd + ID:start_or_end + ID:tempdif + start_or_end:tempdif + 
+#  D$hum:D$wind_spd + ID:start_or_end:tempdif, data = D_no_clima)
+
+########################################################
+# Gammel stuff herfra
+########################################################
 
 # Adding MORE clima to the party
 # with a maximum model
-D_scope <- select(D, !c("date", "consumption","fog","rain","cond","dag", "vis", "dew_pt","dir"))
+D_scope <- select(D, !c("date", "consumption","dag","start_or_end"))
 
-# Vi tager vis med da den er resultat af cond,fog og rain
-par(mfrow=c(1,1))
-Anova(lm(vis ~ cond + fog + rain,D))
 
 fit_scope <- lm(std_cons~. ,D_scope)
-new_fit <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
-#lm(formula = std_cons ~ ID + hum + wind_spd + pressure + tempdif + 
-#start_or_end + ID:tempdif + tempdif:start_or_end + wind_spd:tempdif + 
-#  hum:start_or_end + hum:pressure + wind_spd:pressure, data = D_scope)
+new_fit <- step(fit_scope, scope = ~.^2 , k=log(nrow(D_scope)), test = "F")
+#formula = std_cons ~ ID + hum + wind_spd + dir + vis + pressure + 
+#  cond + tempdif + ID:tempdif + vis:tempdif + dir:pressure + 
+#  dir:cond + pressure:cond + pressure:tempdif + hum:tempdif
 
 # Makes no sense (but is significant)
 f1 <- update(new_fit, .~. -hum:start_or_end)
@@ -129,10 +135,11 @@ nf <- update(.~.-dew_pt:tempdif,new_fit)
 
 
 
-
-
 ##########################################################ECTS
 
+# Vi tager vis med da den er resultat af cond,fog og rain
+par(mfrow=c(1,1))
+Anova(lm(vis ~ cond + fog + rain,D))
 
 f <- update(fit, .~. + D$wind_spd*D$dir)
 Anova(f)
@@ -153,3 +160,88 @@ Anova(f)
 
 f <- update(f, .~. +D$rain*D$vis)
 Anova(f)
+
+
+### GEM AF FITS
+
+3285.936 -> std_cons ~ ID + hum + wind_spd + dir + vis + pressure + 
+  cond + tempdif + ID:tempdif + vis:tempdif + dir:pressure + 
+  dir:cond + pressure:cond + pressure:tempdif + hum:tempdif
+# Har aliased
+
+
+4145.052 ->  std_cons ~ ID + start_or_end + tempdif + D$hum + 
+  D$wind_spd + ID:start_or_end + ID:tempdif + start_or_end:tempdif + 
+  D$hum:D$wind_spd + ID:start_or_end:tempdif
+Det vi har nu
+
+
+# Test 4
+##### ALL CLIMA +/- start_or_end
+D_scope <- select(D, !c("date", "consumption","dag","start_or_end"))
+fit_scope <- lm(std_cons~. ,D_scope)
+f1 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+###
+D_scope <- select(D, !c("date", "consumption","dag"))
+fit_scope <- lm(std_cons~. ,D_scope)
+f2 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+#### CHOSEN CLIMA +/- start_or_end
+D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis"))
+fit_scope <- lm(std_cons~. ,D_scope)
+f3 <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
+###
+D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","start_or_end"))
+fit_scope <- lm(std_cons~. ,D_scope)
+f4 <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
+
+#### SIMPLE MODEL UDEN KLIMA +/- start_or_end
+D_scope <- select(D, !c("date", "consumption","dag","dir","fog","cond","rain","vis","dew_pt","hum","wind_spd","pressure"))
+fit_scope <- lm(std_cons~. ,D_scope)
+f5 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+###
+
+
+
+
+
+
+
+###### Testing models
+
+D_scope <- select(D,ID, std_cons, tempdif,  start_or_end)
+fit_scope <- lm(std_cons~. ,D_scope)
+f4 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+D_scope <- select(D,ID, std_cons, tempdif)
+fit_scope <- lm(std_cons~. ,D_scope)
+f5 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+
+
+D_scope <- select(D,ID, std_cons, start_or_end, tempdif, wind_spd, hum, dew_pt)
+fit_scope <- lm(std_cons~. ,D_scope)
+f6 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+D_scope <- select(D,ID, std_cons, tempdif, wind_spd, hum, dew_pt)
+fit_scope <- lm(std_cons~. ,D_scope)
+f7 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+
+# with pressure + start/end  -> best model
+D_scope <- select(D,ID, std_cons, tempdif, wind_spd, hum, dew_pt, pressure, start_or_end)
+fit_scope <- lm(std_cons~. ,D_scope)
+f8 <- step(fit_scope, scope = ~.^3 , k=log(nrow(D_scope)), test = "F")
+fit_scope <- lm(std_cons~. ,D_scope)
+fit_test <- lm(std_cons~.^4, D_scope)
+AIC(f8, fit_scope, fit_test)
+anova(fit_test, f8) # not sig different -> f8 is more simple
+
+# with ^4
+D_scope <- select(D,ID, std_cons, tempdif, wind_spd, hum, dew_pt, pressure, start_or_end)
+
+f9 <- step(fit_scope, scope = ~.^4 , k=log(nrow(D_scope)), test = "F")
+### Samme model herfra
+
+
+
+
