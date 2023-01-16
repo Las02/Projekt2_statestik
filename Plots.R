@@ -36,7 +36,7 @@ D <- mutate(D, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %>%
   mutate(start_or_end = factor(start_or_end))
 
 ## Removing non important columns
-D <- select(D,!c("temp","dag","weekday", "date"))
+D <- select(D,!c("temp","dag","weekday"))
 #plot(D,col=D$ID,main="Pairsplot of data")
 
 # find the normalised data
@@ -51,7 +51,28 @@ D2 <- select(D,!c("mean_each","consumption"))
 #### Plots for descriptive analysis ####
 
 ## START/END IMPORTANT
-Dplot <- select(D,!c("date", "consumption"))
+Dplot <- select(D,!c("consumption"))
+
+
+# PLOT Tempdif and mean normalised consumption
+# (both divided by their means)
+# against date
+cons_mean <- summarise(D, mean(ncons)) %>% as.double()
+D_by_date <- group_by(D, date)
+D_plot <- summarise(D_by_date, mncons = mean(ncons)/cons_mean)
+temp_mean <- summarise(D, mean(tempdif)) %>% as.double()
+D2_plot <- mutate(D, mtempdif = tempdif/temp_mean)
+
+ggplot(D_plot) +
+  geom_line(aes(x=date, y=mncons), col="Red", size=0.4) +
+  geom_line(data = D2_plot, aes(x=date, y=mtempdif),size=0.4) +
+  theme(legend.box.background = element_rect(color="red", size=2)+
+  labs(x="Date", y="Normalized temperature difference/ mean normalised consumption \n (divided by their means)") +
+  ggtitle("Tempdif and mean normalised consumption
+(both divided by their means)
+against date")
+
+
 
 str(Dplot)
 ## Pairsplot ##
@@ -99,8 +120,10 @@ D2_plot <- mutate(D, mtempdif = tempdif/temp_mean)
 ggplot(D_plot) +
   geom_line(aes(x=date, y=mncons), col="Red", size=0.4) +
   geom_line(data = D2_plot, aes(x=date, y=mtempdif),size=0.4) +
-  labs(x="Date", y="tempdif / mean normalised consumption \n (divided by their means)") +
-  ggtitle("Tempdif and mean normalised consumption
-(both divided by their means)
-against date")
-
+  labs(x="Date", y="Normalized mean temperature difference/
+       normalized consumption") +
+  ggtitle("Date as a function of normalized mean temperature difference 
+          and mean normalised consumption                                                = Normalized mean temperature difference
+                                                                                                                 = Normalized heat consumption")
+          
+          
