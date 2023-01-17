@@ -1,0 +1,277 @@
+\documentclass{article}\usepackage[]{graphicx}\usepackage[]{color}
+% maxwidth is the original width if it is less than linewidth
+% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage[sc]{mathpazo}
+\renewcommand{\sfdefault}{lmss}
+\renewcommand{\ttdefault}{lmtt}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+ {hyperref}
+\hypersetup{
+ pdfstartview={XYZ null null 1}}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.8}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\floatpagefraction}{0.75}
+
+\makeatother
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+
+\title{\title{}}
+
+
+
+\maketitle
+The results below are generated from an R script.
+
+#### Introduction ####rm(list=ls())library(tidyverse)library(ggplot2)library(car)library(stringr)library(xtable)load("./WUndergroundHourly.RData")# Remove all columns without data (only NA columns)clima <- select(WG,!c("wind_gust"  , "wind_chill",
+                      "heat_index" , "precip",
+                      "precip_rate", "precip_total"))# Remove columns with fixed valuesclima <- select(clima, !c("hail","thunder","tornado"))# making seperate column for date and timeclima[c('date','time')] <- str_split_fixed(clima$date,' ',2)# Picking the correct datatype for the columnsclima <- mutate(clima,
+  across(c(dir, cond, fog, rain, snow, date, time),factor)
+)### Finding mode and mean for each date ###clima_by_date <- group_by(clima, date)# Define function to calculate modemode <- function(factors){
+  factors <- factors[factors != ""]
+  max <- factors %>% 
+    table() %>% 
+    which.max() %>% 
+    as.data.frame() %>% 
+    rownames() %>% 
+    factor()
+  
+# If it does not have a value set it to None for clarity
+  if (max == ""){
+    return(factor("None"))}
+  else {
+    return(max)
+  }  
+}# Assign the mode and mean using aggregate functionsclima_mean_mode <- clima_by_date %>% 
+  summarise(
+    across(c(dir, cond, fog, rain, snow),mode),
+    across(c(temp, dew_pt, hum, wind_spd, vis, pressure), ~mean(.,na.rm=T))        
+    )#### Read in the energy performance of the building ##### Find all the files in ./datadata_files <- dir("./data", full.names=T)# Read them into a single dataframe# \x00 is set to be ignored  since it for some reason is at the end of each fileenergy <- NULLfor (i in seq_along(data_files)){
+  data <- read.table(data_files[i], sep=";", skipNul=TRUE) %>% 
+    select(V1, V2, V4)
+  energy <- bind_rows(energy, data)
+}# Renaming the dataframeenergy <- energy %>% 
+  rename(id=V1, time=V2, reading=V4)## Exclude meters with less than 121 records# find the records with 121 recordsid_to_keep <- group_by(energy, id) %>% 
+  summarise(n=n()) %>% 
+  filter(n==121)# only keep theseenergy <- filter(energy, id %in% id_to_keep$id)# set the correct datatypesenergy <- mutate(energy, 
+                 reading = as.numeric(gsub(",", ".", reading)))# Date CET/CEST refers to winter-/summer-timeenergy$time <- as.POSIXct(strptime(energy$time,"%d-%m-%Y %H.%M"))# Make data to approximate new values at 11:59:00days <- unique(as.Date(energy$time))time <- "11:59:00"new_time_date <- NULLfor(i in seq_along(days)){
+  days_time <- paste(days[i],time) %>% 
+      as.POSIXct()
+  new_time_date <- append(new_time_date, days_time)
+}new_time_date##   [1] "2018-09-01 11:59:00 CEST" "2018-10-01 11:59:00 CEST" "2018-09-30 11:59:00 CEST"
+##   [4] "2018-11-01 11:59:00 CET"  "2018-12-01 11:59:00 CET"  "2018-09-02 11:59:00 CEST"
+##   [7] "2018-10-02 11:59:00 CEST" "2018-11-02 11:59:00 CET"  "2018-12-02 11:59:00 CET" 
+##  [10] "2018-09-03 11:59:00 CEST" "2018-10-03 11:59:00 CEST" "2018-11-03 11:59:00 CET" 
+##  [13] "2018-12-03 11:59:00 CET"  "2018-09-04 11:59:00 CEST" "2018-10-04 11:59:00 CEST"
+##  [16] "2018-11-04 11:59:00 CET"  "2018-12-04 11:59:00 CET"  "2018-09-05 11:59:00 CEST"
+##  [19] "2018-10-05 11:59:00 CEST" "2018-11-05 11:59:00 CET"  "2018-12-05 11:59:00 CET" 
+##  [22] "2018-09-06 11:59:00 CEST" "2018-10-06 11:59:00 CEST" "2018-11-06 11:59:00 CET" 
+##  [25] "2018-12-06 11:59:00 CET"  "2018-09-07 11:59:00 CEST" "2018-10-07 11:59:00 CEST"
+##  [28] "2018-11-07 11:59:00 CET"  "2018-12-07 11:59:00 CET"  "2018-09-08 11:59:00 CEST"
+##  [31] "2018-10-08 11:59:00 CEST" "2018-11-08 11:59:00 CET"  "2018-12-08 11:59:00 CET" 
+##  [34] "2018-09-09 11:59:00 CEST" "2018-10-09 11:59:00 CEST" "2018-11-09 11:59:00 CET" 
+##  [37] "2018-12-09 11:59:00 CET"  "2018-09-10 11:59:00 CEST" "2018-10-10 11:59:00 CEST"
+##  [40] "2018-11-10 11:59:00 CET"  "2018-12-10 11:59:00 CET"  "2018-09-11 11:59:00 CEST"
+##  [43] "2018-10-11 11:59:00 CEST" "2018-11-11 11:59:00 CET"  "2018-12-11 11:59:00 CET" 
+##  [46] "2018-09-12 11:59:00 CEST" "2018-10-12 11:59:00 CEST" "2018-11-12 11:59:00 CET" 
+##  [49] "2018-12-12 11:59:00 CET"  "2018-09-13 11:59:00 CEST" "2018-10-13 11:59:00 CEST"
+##  [52] "2018-11-13 11:59:00 CET"  "2018-12-13 11:59:00 CET"  "2018-09-14 11:59:00 CEST"
+##  [55] "2018-10-14 11:59:00 CEST" "2018-11-14 11:59:00 CET"  "2018-12-14 11:59:00 CET" 
+##  [58] "2018-09-15 11:59:00 CEST" "2018-10-15 11:59:00 CEST" "2018-11-15 11:59:00 CET" 
+##  [61] "2018-12-15 11:59:00 CET"  "2018-09-16 11:59:00 CEST" "2018-10-16 11:59:00 CEST"
+##  [64] "2018-11-16 11:59:00 CET"  "2018-12-16 11:59:00 CET"  "2018-09-17 11:59:00 CEST"
+##  [67] "2018-10-17 11:59:00 CEST" "2018-11-17 11:59:00 CET"  "2018-12-17 11:59:00 CET" 
+##  [70] "2018-09-18 11:59:00 CEST" "2018-10-18 11:59:00 CEST" "2018-11-18 11:59:00 CET" 
+##  [73] "2018-12-18 11:59:00 CET"  "2018-09-19 11:59:00 CEST" "2018-10-19 11:59:00 CEST"
+##  [76] "2018-11-19 11:59:00 CET"  "2018-12-19 11:59:00 CET"  "2018-09-20 11:59:00 CEST"
+##  [79] "2018-10-20 11:59:00 CEST" "2018-11-20 11:59:00 CET"  "2018-12-20 11:59:00 CET" 
+##  [82] "2018-09-21 11:59:00 CEST" "2018-10-21 11:59:00 CEST" "2018-11-21 11:59:00 CET" 
+##  [85] "2018-12-21 11:59:00 CET"  "2018-09-22 11:59:00 CEST" "2018-10-22 11:59:00 CEST"
+##  [88] "2018-11-22 11:59:00 CET"  "2018-12-22 11:59:00 CET"  "2018-09-23 11:59:00 CEST"
+##  [91] "2018-10-23 11:59:00 CEST" "2018-11-23 11:59:00 CET"  "2018-12-23 11:59:00 CET" 
+##  [94] "2018-09-24 11:59:00 CEST" "2018-10-24 11:59:00 CEST" "2018-11-24 11:59:00 CET" 
+##  [97] "2018-12-24 11:59:00 CET"  "2018-09-25 11:59:00 CEST" "2018-10-25 11:59:00 CEST"
+## [100] "2018-11-25 11:59:00 CET"  "2018-12-25 11:59:00 CET"  "2018-09-26 11:59:00 CEST"
+## [103] "2018-10-26 11:59:00 CEST" "2018-11-26 11:59:00 CET"  "2018-12-26 11:59:00 CET" 
+## [106] "2018-09-27 11:59:00 CEST" "2018-10-27 11:59:00 CEST" "2018-11-27 11:59:00 CET" 
+## [109] "2018-12-27 11:59:00 CET"  "2018-09-28 11:59:00 CEST" "2018-10-28 11:59:00 CET" 
+## [112] "2018-11-28 11:59:00 CET"  "2018-12-28 11:59:00 CET"  "2018-09-29 11:59:00 CEST"
+## [115] "2018-10-29 11:59:00 CET"  "2018-11-29 11:59:00 CET"  "2018-12-29 11:59:00 CET" 
+## [118] "2018-10-30 11:59:00 CET"  "2018-11-30 11:59:00 CET"  "2018-08-31 11:59:00 CEST"
+## [121] "2018-10-31 11:59:00 CET"
+## Approximate new values at 11:59:00id_time_cons <- NULLall_id <- unique(energy$id)for (i in seq_along(all_id)){
+# select values with the correct id
+energy_for_id <- filter(energy, id == all_id[i]) %>% 
+  arrange(time)
+
+# Approximate new values
+# It returns NA if tring to approximate
+# 2018-12-29 11:59:00 CET, its not seen
+# Here the largest number is used
+approx <- approx(energy_for_id$time, 
+                 energy_for_id$reading, xout=new_time_date,
+                 rule = 2)
+
+# Assign the new values to a temp df
+time <- as.Date(approx$x)
+reading <- approx$y
+id <- rep(all_id[i],length(time))
+temp_df <- data.frame(time,id,reading)
+
+# add them to the id_time_cons df
+id_time_cons <- bind_rows(temp_df,id_time_cons)
+}## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm): collapsing to unique 'x' values
+# make consumption array. # calculated by taking the day before MINUS the day# this means that the last day gets NaNconsumption <- group_by(id_time_cons, id) %>% 
+  arrange(time) %>% 
+  mutate(cons=lead(reading)-reading)# ungroup and rename time to date and remove readingconsumption <- ungroup(consumption, id)consumption <- rename(consumption,date=time) %>% select(!"reading")# Join the two datasetsclima_mean_mode <- mutate(clima_mean_mode, date=as.Date(date))joined <- inner_join(clima_mean_mode, consumption, by="date")#Remove first date due to NANS, and end due to estimationjoined <- filter(joined, date != "2018-08-31")joined <- filter(joined, date != "2018-12-29")# Rowsnrow(joined)## [1] 9794
+# Summarysummary(joined)##       date                 dir                     cond      fog      rain     snow    
+##  Min.   :2018-09-01   SE     :1079   Scattered Clouds:3071   0:9462   0:9462   0:9794  
+##  1st Qu.:2018-10-01   South  : 996   Mist            :2407   1: 332   1: 332           
+##  Median :2018-10-30   SW     : 996   Clear           :1743                             
+##  Mean   :2018-10-30   West   : 913   Mostly Cloudy   : 913                             
+##  3rd Qu.:2018-11-29   East   : 830   Fog             : 664                             
+##  Max.   :2018-12-28   ESE    : 830   Partly Cloudy   : 249                             
+##                       (Other):4150   (Other)         : 747                             
+##       temp            dew_pt            hum           wind_spd           vis        
+##  Min.   :-1.800   Min.   :-3.600   Min.   :49.00   Min.   : 3.713   Min.   : 1.965  
+##  1st Qu.: 4.579   1st Qu.: 2.190   1st Qu.:73.10   1st Qu.:11.305   1st Qu.:11.667  
+##  Median : 8.884   Median : 6.792   Median :82.30   Median :15.102   Median :17.645  
+##  Mean   : 8.731   Mean   : 6.315   Mean   :81.01   Mean   :16.356   Mean   :20.601  
+##  3rd Qu.:12.833   3rd Qu.: 9.947   3rd Qu.:89.30   3rd Qu.:20.786   3rd Qu.:29.571  
+##  Max.   :18.500   Max.   :15.583   Max.   :98.39   Max.   :41.929   Max.   :50.000  
+##                                                                                     
+##     pressure            id                cons        
+##  Min.   : 985.8   Min.   : 4529799   Min.   :0.00000  
+##  1st Qu.:1011.1   1st Qu.: 6627217   1st Qu.:0.07673  
+##  Median :1017.6   Median :65005112   Median :0.15164  
+##  Mean   :1016.5   Mean   :37890916   Mean   :0.43622  
+##  3rd Qu.:1022.4   3rd Qu.:69429582   3rd Qu.:0.33675  
+##  Max.   :1040.2   Max.   :78673711   Max.   :8.00929  
+## 
+# Remaining meters == ids?nrow(unique(select(joined, id)))## [1] 83
+# 83 idsknitr::stitch('main.r')## 
+## 
+## processing file: main.Rnw
+## Error in parse_block(g[-1], g[1], params.src, markdown_mode): Duplicate chunk label 'setup', which has been used for the chunk:
+## options(width=90)
+## knitr::opts_chunk$set(out.width = '.6\\linewidth')
+## .knitr.title = if (exists('.knitr.title')) paste('\\title{', .knitr.title, '}', sep = '') else ''
+## .knitr.author = if (nzchar(.knitr.title) && exists('.knitr.author')) {
+##   paste('\\author{', .knitr.author, '%\n',
+##         '\\thanks{This report is automatically generated with the R package \\textbf{knitr}
+##         (version ', packageVersion('knitr'), ').}}', sep = '')
+## } else ''
+
+
+The R session information (including the OS info, R version and all
+packages used):
+
+sessionInfo()## R version 4.0.3 (2020-10-10)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 10 x64 (build 19045)
+## 
+## Matrix products: default
+## 
+## locale:
+## [1] LC_COLLATE=Danish_Denmark.1252  LC_CTYPE=Danish_Denmark.1252   
+## [3] LC_MONETARY=Danish_Denmark.1252 LC_NUMERIC=C                   
+## [5] LC_TIME=Danish_Denmark.1252    
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] xlsx_0.6.5      gridExtra_2.3   lubridate_1.8.0 xtable_1.8-4    car_3.1-1      
+##  [6] carData_3.0-5   forcats_0.5.1   stringr_1.4.0   dplyr_1.0.7     purrr_0.3.4    
+## [11] readr_2.1.2     tidyr_1.1.4     tibble_3.1.6    ggplot2_3.3.6   tidyverse_1.3.1
+## 
+## loaded via a namespace (and not attached):
+##  [1] tinytex_0.33     xfun_0.25        tidyselect_1.1.1 rJava_1.0-6      haven_2.4.3     
+##  [6] colorspace_2.0-2 vctrs_0.3.8      generics_0.1.1   utf8_1.2.2       rlang_0.4.11    
+## [11] pillar_1.6.4     glue_1.4.2       withr_2.5.0      DBI_1.1.2        dbplyr_2.1.1    
+## [16] modelr_0.1.8     readxl_1.3.1     lifecycle_1.0.0  munsell_0.5.0    gtable_0.3.0    
+## [21] cellranger_1.1.0 rvest_1.0.2      evaluate_0.14    knitr_1.33       labeling_0.4.2  
+## [26] tzdb_0.2.0       fansi_0.5.0      xlsxjars_0.6.1   highr_0.9        broom_0.7.10    
+## [31] Rcpp_1.0.7       scales_1.1.1     backports_1.3.0  jsonlite_1.7.2   abind_1.4-5     
+## [36] farver_2.1.0     fs_1.5.0         digest_0.6.27    hms_1.1.1        stringi_1.7.4   
+## [41] grid_4.0.3       cli_3.1.0        tools_4.0.3      magrittr_2.0.1   crayon_1.4.1    
+## [46] pkgconfig_2.0.3  ellipsis_0.3.2   xml2_1.3.3       reprex_2.0.1     assertthat_0.2.1
+## [51] httr_1.4.2       rstudioapi_0.13  R6_2.5.1         compiler_4.0.3
+Sys.time()## [1] "2023-01-17 17:38:17 CET"
+
+
+
+\end{document}

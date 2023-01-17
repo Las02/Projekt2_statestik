@@ -10,7 +10,7 @@ library(lubridate)
 
 ## Reading in the data
 D <- read.csv("merged_data.csv", header=TRUE)
-
+summary(D)
 ## Setting the datatypes
 # Setting the factors
 D <- mutate(D, across(c(dir, cond, fog, rain, ID),factor))

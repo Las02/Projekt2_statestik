@@ -30,6 +30,7 @@ clima_by_date <- group_by(clima, date)
 
 # Define function to calculate mode
 mode <- function(factors){
+  factors <- factors[factors != ""]
   max <- factors %>% 
     table() %>% 
     which.max() %>% 
@@ -152,6 +153,4 @@ summary(joined)
 # Remaining meters == ids?
 nrow(unique(select(joined, id)))
 # 83 ids
-
-
 
