@@ -36,8 +36,6 @@ D <- mutate(D, start_or_end = ifelse(as.integer(dag)<15, "START","END")) %>%
   mutate(start_or_end = factor(start_or_end))
 
 ## Removing non important columns
-D <- select(D,!c("temp","dag","weekday"))
-#plot(D,col=D$ID,main="Pairsplot of data")
 
 # find the normalised data
 mean_each <- group_by(D, ID) %>% 
@@ -45,13 +43,9 @@ mean_each <- group_by(D, ID) %>%
 D_with_mean <- inner_join(mean_each, D, "ID") 
 D <- mutate(D_with_mean, ncons = consumption/mean_each)
 
-## Removing non important columns
-D2 <- select(D,!c("mean_each","consumption"))
-
 #### Plots for descriptive analysis ####
 
 ## START/END IMPORTANT
-Dplot <- select(D,!c("consumption"))
 
 
 # PLOT Tempdif and mean normalised consumption
@@ -74,9 +68,8 @@ against date")
 
 
 
-str(Dplot)
 ## Pairsplot ##
-plot(Dplot, col=Dplot$ID, main = "Pairsplot of data")
+#plot(Dplot, col=Dplot$ID, main = "Pairsplot of data")
 
 ## Histogram of consumption ##
 hist(Dplot$ncons, col="orange", border = "brown", main = "Normalized consumpution", xlab="Normalized consumption")
@@ -88,14 +81,23 @@ ggplot(D,aes(x=date, y=ncons,col=ID)) +
   labs(y="Normalized consumption", x= "Date", title ="Date as a function of normalized consumption")
 
 #nconc ~ tempdif
-ggplot(D, aes(x=tempdif, y=ncons, col=ID))+
+ggplot(D, aes(x=temp, y=ncons, col=ID))+
   geom_point(size=0.8)+ theme(legend.position = "none")+
-  labs(y="Normalized consumption", x= "Temperature difference", title ="Temperature difference as a function of normalized consumption")
+  labs(y="Normalized consumption", x= "Temperature", title ="Temperature as a function of normalized consumption")
+
+ggplot(D, aes(x=temp, y=consumption, col=ID))+
+  geom_point(size=0.8)+ theme(legend.position = "none")+
+  labs(y="Consumption", x= "Temperature", title ="Temperature as a function of consumption")
+
+ggplot(filter(D,ID %in% c("78185925")),aes(x=temp, y=consumption,col=ID)) + 
+  geom_point(size=0.8)+ 
+  labs(y="Consumption", x= "Temperature", title ="Temperature as a function of consumption", legend= D$ID) + 
+  geom_smooth(method=lm,alpha=0)
 
 
 ggplot(D, aes(x=tempdif, y=ncons, col=ID))+
   geom_point(size=0.8)+ theme(legend.position = "none")+geom_smooth(method=lm, size=0.5, alpha=0)+
-  labs(y="Normalized consumption", x= "Temperature difference", title ="Temperature difference as a function of normalized consumption")
+  labs(y="Normalized consumption", x= "Temperature difference", title ="NormalisedTemperature difference as a function of normalized consumption")
 
 
 # But it is explained by the temperature fluxating. Maybe we are modelling the noise
@@ -122,8 +124,9 @@ ggplot(D_plot) +
   geom_line(data = D2_plot, aes(x=date, y=mtempdif),size=0.4) +
   labs(x="Date", y="Normalized mean temperature difference/
        normalized consumption") +
-  ggtitle("Date as a function of normalized mean temperature difference 
-          and mean normalised consumption                                                = Normalized mean temperature difference
-                                                                                                                 = Normalized heat consumption")
-          
-          
+  ggtitle("Normalized mean temperature difference and mean normalised 
+          consumption as a function of date                                               = Normalized mean temperature difference
+                                                                                                             = Normalized heat consumption")
+ggplot(D,aes(x=temp, y=dew_pt,col="black")) + 
+  geom_point(size=1, col="black") + theme(legend.position = "none") +
+  labs(y="Dew point", x= "Temperature", title ="Dew point as a function of temperature")        
