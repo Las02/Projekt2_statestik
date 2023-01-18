@@ -80,20 +80,29 @@ ggplot(D,aes(x=date, y=ncons,col=ID)) +
   geom_point(size=0.8) + theme(legend.position = "none") +
   labs(y="Normalized consumption", x= "Date", title ="Date as a function of normalized consumption")
 
+
+
+######## Dem her ##########
 #nconc ~ tempdif
 ggplot(D, aes(x=temp, y=ncons, col=ID))+
   geom_point(size=0.8)+ theme(legend.position = "none")+
-  labs(y="Normalized consumption", x= "Temperature", title ="Temperature as a function of normalized consumption")
+  labs(y="Normalized consumption", x= "Temperature", title ="Normalized consumption as a function of temperature")
 
 ggplot(D, aes(x=temp, y=consumption, col=ID))+
   geom_point(size=0.8)+ theme(legend.position = "none")+
-  labs(y="Consumption", x= "Temperature", title ="Temperature as a function of consumption")
+  labs(y="Consumption", x= "Temperature", title ="Consumption as a function of temperature")
 
 ggplot(filter(D,ID %in% c("78185925")),aes(x=temp, y=consumption,col=ID)) + 
   geom_point(size=0.8)+ 
-  labs(y="Consumption", x= "Temperature", title ="Temperature as a function of consumption", legend= D$ID) + 
+  labs(y="Consumption", x= "Temperature", title ="Consumption as a function of temperature for building 78185925", legend= D$ID) + 
   geom_smooth(method=lm,alpha=0)
 
+ggplot(D,aes(x=temp, y=dew_pt,col="black")) + 
+  geom_point(size=1, col="black") + theme(legend.position = "none") +
+  labs(y="Dew point", x= "Temperature", title ="Dew point as a function of temperature")        
+
+
+###############
 
 ggplot(D, aes(x=tempdif, y=ncons, col=ID))+
   geom_point(size=0.8)+ theme(legend.position = "none")+geom_smooth(method=lm, size=0.5, alpha=0)+
@@ -126,7 +135,4 @@ ggplot(D_plot) +
        normalized consumption") +
   ggtitle("Normalized mean temperature difference and mean normalised 
           consumption as a function of date                                               = Normalized mean temperature difference
-                                                                                                             = Normalized heat consumption")
-ggplot(D,aes(x=temp, y=dew_pt,col="black")) + 
-  geom_point(size=1, col="black") + theme(legend.position = "none") +
-  labs(y="Dew point", x= "Temperature", title ="Dew point as a function of temperature")        
+                                                                                                               = Normalized heat consumption")
